@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <TypeScriptToolsPath>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', '..', 'tools', 'typescript'))</TypeScriptToolsPath>
+        <TypeScriptLogFile>$([MSBuild]::NormalizePath('$(TypeScriptToolsPath)', 'typescript.log'))</TypeScriptLogFile>
+    </PropertyGroup>
+
+    <UsingTask TaskName="ReadTypeScriptLog" TaskFactory="RoslynCodeTaskFactory"
+               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <LogFile ParameterType="System.String" Required="true" />
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System.IO"/>
+            <Code Type="Fragment" Language="cs">
+                <![CDATA[
+          if (File.Exists(LogFile))
+          {
+              string content = File.ReadAllText(LogFile);
+              Log.LogMessage(MessageImportance.High, "TypeScript Build Log:");
+              Log.LogMessage(MessageImportance.High, "------------------------");
+              Log.LogMessage(MessageImportance.High, content);
+              Log.LogMessage(MessageImportance.High, "------------------------");
+          }
+        ]]>
+            </Code>
+        </Task>
+    </UsingTask>
+
+    <Target Name="CustomCompileTypeScript" BeforeTargets="BeforeBuild">
+        <Message Text="----- Starting TypeScript compilation via BlazingTs -----" Importance="high" />
+
+        <Delete Files="$(TypeScriptLogFile)" Condition="Exists('$(TypeScriptLogFile)')" />
+        
+        <Exec
+                Command="&quot;$(TypeScriptToolsPath)\tsc2.cmd&quot; --project &quot;$(ProjectDir)tsconfig.json&quot;"
+                WorkingDirectory="$(TypeScriptToolsPath)"
+                IgnoreExitCode="true"
+        />
+
+        <ReadTypeScriptLog LogFile="$(TypeScriptLogFile)" />
+
+        <Message Text="----- Fustom TypeScript compilation via BlazingTs -----" Importance="high" />
+    </Target>
+</Project>

@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <Version>1.0.5</Version>
+        <Description>TypeScript compilation support for MSBuild</Description>
+        <LangVersion>preview</LangVersion>
+        <Title>BlazingTs</Title>
+        <Authors>Matěj "lofcz" Štágl</Authors>
+        <Copyright>Matěj "lofcz" Štágl</Copyright>
+        <PackageProjectUrl>https://github.com/lofcz/blazing-ts</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/lofcz/blazing-ts/blob/master/LICENSE</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/lofcz/blazing-ts</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>msbuild,typescript</PackageTags>
+        <DevelopmentDependency>true</DevelopmentDependency>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="build\BlazingTs.targets">
+            <Pack>true</Pack>
+            <PackagePath>build</PackagePath>
+        </Content>
+        <Content Include="build\BlazingTs.props">
+            <Pack>true</Pack>
+            <PackagePath>build</PackagePath>
+        </Content>
+        <Content Include="tools\typescript\**\*">
+            <Pack>true</Pack>
+            <PackagePath>tools\typescript</PackagePath>
+        </Content>
+    </ItemGroup>
+</Project>

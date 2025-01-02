@@ -1,0 +1,14 @@
+*.cache
+*.info
+.idea
+bin
+obj
+appCfg.json
+ScioSkoly.Chat.sln.DotSettings.user
+.vs
+.vscode
+TeReoLocalizer/TeReoLocalizer.sln.DotSettings.user
+TeReoLocalizer/TeReoLocalizer.Shared/appCfg.json5
+TeReoLocalizer/TeReoLocalizer.Shared/appCfg.json
+TeReoLocalizer/TeReoLocalizer.sln.DotSettings
+TeReoLocalizer/TeReoLocalizer.Shared/userSettings.json
