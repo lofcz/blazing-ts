@@ -3,7 +3,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <Version>1.0.5</Version>
+        <Version>5.7.1</Version>
         <Description>TypeScript compilation support for MSBuild</Description>
         <LangVersion>preview</LangVersion>
         <Title>BlazingTs</Title>
@@ -15,6 +15,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageTags>msbuild,typescript</PackageTags>
         <DevelopmentDependency>true</DevelopmentDependency>
+        <PackageIcon>icon.jpg</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -30,5 +31,9 @@
             <Pack>true</Pack>
             <PackagePath>tools\typescript</PackagePath>
         </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="icon.jpg" Pack="true" PackagePath="\"/>
     </ItemGroup>
 </Project>
