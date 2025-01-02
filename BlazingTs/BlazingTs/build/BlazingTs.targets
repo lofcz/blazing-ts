@@ -40,6 +40,6 @@
 
         <ReadTypeScriptLog LogFile="$(TypeScriptLogFile)" />
 
-        <Message Text="----- Fustom TypeScript compilation via BlazingTs -----" Importance="high" />
+        <Message Text="----- Finished TypeScript compilation via BlazingTs -----" Importance="high" />
     </Target>
 </Project>
