@@ -14,7 +14,7 @@ Create the `tsconfig.json` file in your project and build it. BlazingTS will inv
 
 ## Information
 
-BlazingTS targets `netstandard2.0`, hence, it's compatible with almost any version of .NET Core / .NET Framework. The library is cross-platform, supporting Linux, Windows, and MacOS. A GitHub action automatically updates the library, checking for a new release of TypeScript (on NPM) each day. If a new version is released, the library is updated automatically and a new release on NuGet is created. Therefore, new versions of TypeScript are available automatically, `Microsoft.Typescript.Msbuild` is updated manually by a maintainer, resulting in a significant delay/skipping of (minor) releases altogether.
+BlazingTS targets `netstandard2.0`, hence, it's compatible with almost any version of .NET Core / .NET Framework. The library is cross-platform, supporting Linux, Windows, and MacOS. A GitHub action automatically updates the library, checking for a new release of TypeScript (on NPM) daily. If a new version is released, the library is updated automatically and a new release on NuGet is created. Therefore, new versions of TypeScript are available immediately, unlike `Microsoft.Typescript.Msbuild` which is updated manually by a maintainer, resulting in a significant delay/skipping of (minor) releases altogether.
 
 ## License
 
