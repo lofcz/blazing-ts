@@ -49,11 +49,22 @@ jobs:
       - name: Compare versions and update if needed
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
         run: |
-          mkdir -p ./BlazingTs/BlazingTs/tools/typescript
-          rm -rf ./BlazingTs/BlazingTs/tools/typescript/*
-          npm install --prefix ./temp typescript@${{ steps.latest-version.outputs.latest_version }}
-          mv ./temp/node_modules/typescript/* ./BlazingTs/BlazingTs/tools/typescript/
-          rm -rf ./temp
+            # backup extra files
+            mkdir -p ./temp_backup
+            cp ./BlazingTs/BlazingTs/tools/typescript/tsc2.cmd ./temp_backup/ || true
+            cp ./BlazingTs/BlazingTs/tools/typescript/tsc3.cmd ./temp_backup/ || true
+            
+            # Instalace nové verze
+            mkdir -p ./BlazingTs/BlazingTs/tools/typescript
+            rm -rf ./BlazingTs/BlazingTs/tools/typescript/*
+            npm install --prefix ./temp typescript@${{ steps.latest-version.outputs.latest_version }}
+            mv ./temp/node_modules/typescript/* ./BlazingTs/BlazingTs/tools/typescript/
+            
+            cp ./temp_backup/tsc2.cmd ./BlazingTs/BlazingTs/tools/typescript/ || true
+            cp ./temp_backup/tsc3.cmd ./BlazingTs/BlazingTs/tools/typescript/ || true
+    
+            rm -rf ./temp
+            rm -rf ./temp_backup
           
       - name: Build NuGet package
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
