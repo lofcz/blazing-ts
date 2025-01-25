@@ -125,10 +125,14 @@ jobs:
         id: check_tag
         if: steps.update-needed.outputs.update_needed == 'true'
         run: |
-          if git rev-parse "v${{ steps.update-needed.outputs.new_version }}" >/dev/null 2>&1; then
+          git fetch --tags
+          VERSION="${{ steps.update-needed.outputs.new_version }}"
+          if git show-ref --tags "v${VERSION}" --quiet; then
             echo "tag_exists=true" >> $GITHUB_OUTPUT
+            echo "Tag v${VERSION} already exists"
           else
             echo "tag_exists=false" >> $GITHUB_OUTPUT
+            echo "Tag v${VERSION} does not exist"
           fi
 
       - name: Increment hotfix version if tag exists
@@ -136,16 +140,31 @@ jobs:
         if: steps.check_tag.outputs.tag_exists == 'true'
         run: |
           VERSION="${{ steps.update-needed.outputs.new_version }}"
-          if [[ $VERSION == *"-hotfix."* ]]; then
-            BASE_VERSION=$(echo $VERSION | sed 's/-hotfix\.[0-9]*$//')
-            HOTFIX_NUM=$(echo $VERSION | grep -o 'hotfix\.[0-9]*$' | grep -o '[0-9]*$')
-            NEW_HOTFIX=$((HOTFIX_NUM + 1))
-            NEW_VERSION="${BASE_VERSION}-hotfix.${NEW_HOTFIX}"
-          else
-            NEW_VERSION="${VERSION}-hotfix.1"
-          fi
+          # Najít nejvyšší existující hotfix verzi
+          BASE_VERSION=$(echo $VERSION | sed 's/-hotfix\.[0-9]*$//')
+          HIGHEST_HOTFIX=0
+          
+          for tag in $(git tag -l "v${BASE_VERSION}-hotfix.*"); do
+            HOTFIX_NUM=$(echo $tag | grep -o 'hotfix\.[0-9]*$' | grep -o '[0-9]*$')
+            if [ "$HOTFIX_NUM" -gt "$HIGHEST_HOTFIX" ]; then
+              HIGHEST_HOTFIX=$HOTFIX_NUM
+            fi
+          done
+          
+          NEW_HOTFIX=$((HIGHEST_HOTFIX + 1))
+          NEW_VERSION="${BASE_VERSION}-hotfix.${NEW_HOTFIX}"
+          
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "Final version will be: $NEW_VERSION"
+
+      - name: Verify new version tag doesn't exist
+        if: steps.update-needed.outputs.update_needed == 'true'
+        run: |
+          FINAL_VERSION="${{ steps.increment_hotfix.outputs.new_version || steps.update-needed.outputs.new_version }}"
+          if git show-ref --tags "v${FINAL_VERSION}" --quiet; then
+            echo "Error: Tag v${FINAL_VERSION} already exists!"
+            exit 1
+          fi
           
       - name: Update project version
         if: steps.update-needed.outputs.update_needed == 'true'
