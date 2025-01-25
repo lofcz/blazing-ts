@@ -3,6 +3,10 @@
     <PropertyGroup>
         <TypeScriptToolsPath>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', '..', 'tools', 'typescript'))</TypeScriptToolsPath>
         <TypeScriptLogFile>$([MSBuild]::NormalizePath('$(TypeScriptToolsPath)', 'typescript.log'))</TypeScriptLogFile>
+        <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
+        <IsWindows Condition="'$(OS)' != 'Windows_NT'">false</IsWindows>
+        <TypeScriptCompilerScript Condition="'$(IsWindows)' == 'true'">"$(TypeScriptToolsPath)\tsc2.cmd"</TypeScriptCompilerScript>
+        <TypeScriptCompilerScript Condition="'$(IsWindows)' != 'true'">$(TypeScriptToolsPath)/tsc2.sh</TypeScriptCompilerScript>
     </PropertyGroup>
 
     <UsingTask TaskName="ReadTypeScriptLog" TaskFactory="RoslynCodeTaskFactory"
@@ -27,13 +31,17 @@
         </Task>
     </UsingTask>
 
+    <Target Name="MakeTypeScriptShellScriptExecutable" BeforeTargets="CustomCompileTypeScript" Condition="'$(IsWindows)' != 'true'">
+        <Exec Command="chmod +x &quot;$(TypeScriptCompilerScript)&quot;" />
+    </Target>
+
     <Target Name="CustomCompileTypeScript" BeforeTargets="BeforeBuild">
         <Message Text="----- Starting TypeScript compilation via BlazingTs -----" Importance="high" />
 
         <Delete Files="$(TypeScriptLogFile)" Condition="Exists('$(TypeScriptLogFile)')" />
-        
+
         <Exec
-                Command="&quot;$(TypeScriptToolsPath)\tsc2.cmd&quot; --project &quot;$(ProjectDir)tsconfig.json&quot;"
+                Command="$(TypeScriptCompilerScript) --project &quot;$(ProjectDir)tsconfig.json&quot;"
                 WorkingDirectory="$(TypeScriptToolsPath)"
                 IgnoreExitCode="true"
         />

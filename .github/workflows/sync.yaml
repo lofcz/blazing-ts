@@ -50,6 +50,9 @@ jobs:
             echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
             fi
           
+      - name: Install dos2unix
+        run: sudo apt-get install -y dos2unix
+    
       - name: Compare versions and update if needed
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
         run: |
@@ -57,16 +60,30 @@ jobs:
             mkdir -p ./temp_backup
             cp ./BlazingTs/BlazingTs/tools/typescript/tsc2.cmd ./temp_backup/ || true
             cp ./BlazingTs/BlazingTs/tools/typescript/tsc3.cmd ./temp_backup/ || true
+            cp ./BlazingTs/BlazingTs/tools/typescript/tsc2.sh ./temp_backup/ || true
+            cp ./BlazingTs/BlazingTs/tools/typescript/tsc3.sh ./temp_backup/ || true
             
-            # Instalace nové verze
+            # Install new version
             mkdir -p ./BlazingTs/BlazingTs/tools/typescript
             rm -rf ./BlazingTs/BlazingTs/tools/typescript/*
             npm install --prefix ./temp typescript@${{ steps.latest-version.outputs.latest_version }}
             mv ./temp/node_modules/typescript/* ./BlazingTs/BlazingTs/tools/typescript/
             
+            # Restore backup files
             cp ./temp_backup/tsc2.cmd ./BlazingTs/BlazingTs/tools/typescript/ || true
             cp ./temp_backup/tsc3.cmd ./BlazingTs/BlazingTs/tools/typescript/ || true
-    
+            cp ./temp_backup/tsc2.sh ./BlazingTs/BlazingTs/tools/typescript/ || true
+            cp ./temp_backup/tsc3.sh ./BlazingTs/BlazingTs/tools/typescript/ || true
+            
+            # Ensure shell scripts have correct permissions
+            chmod +x ./BlazingTs/BlazingTs/tools/typescript/tsc2.sh || true
+            chmod +x ./BlazingTs/BlazingTs/tools/typescript/tsc3.sh || true
+            
+            # Ensure shell scripts have Unix line endings
+            dos2unix ./BlazingTs/BlazingTs/tools/typescript/tsc2.sh || true
+            dos2unix ./BlazingTs/BlazingTs/tools/typescript/tsc3.sh || true
+            
+            # Cleanup
             rm -rf ./temp
             rm -rf ./temp_backup
           
