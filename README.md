@@ -10,7 +10,7 @@ This is a drop-in, FOSS replacement for `Microsoft.Typescript.Msbuild`.
 dotnet add package BlazingTs
 ```
 
-Create the `tsconfig.json` file in your project and build it. BlazingTS will invoke bundled `tsc` during the `BeforeBuild` phase of MS Build and transpile your `ts`/`tsx` into `js`/`jsx` files.
+Create the `tsconfig.json` file in your project and build it. BlazingTS will invoke bundled `tsc` during the `BeforeBuild` phase of MSBuild and transpile your `ts`/`tsx` into `js`/`jsx` files.
 
 ## Information
 
