@@ -120,11 +120,38 @@ jobs:
             # Cleanup
             rm -rf ./temp
             rm -rf ./temp_backup
+
+      - name: Check if tag exists
+        id: check_tag
+        if: steps.update-needed.outputs.update_needed == 'true'
+        run: |
+          if git rev-parse "v${{ steps.update-needed.outputs.new_version }}" >/dev/null 2>&1; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Increment hotfix version if tag exists
+        id: increment_hotfix
+        if: steps.check_tag.outputs.tag_exists == 'true'
+        run: |
+          VERSION="${{ steps.update-needed.outputs.new_version }}"
+          if [[ $VERSION == *"-hotfix."* ]]; then
+            BASE_VERSION=$(echo $VERSION | sed 's/-hotfix\.[0-9]*$//')
+            HOTFIX_NUM=$(echo $VERSION | grep -o 'hotfix\.[0-9]*$' | grep -o '[0-9]*$')
+            NEW_HOTFIX=$((HOTFIX_NUM + 1))
+            NEW_VERSION="${BASE_VERSION}-hotfix.${NEW_HOTFIX}"
+          else
+            NEW_VERSION="${VERSION}-hotfix.1"
+          fi
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Final version will be: $NEW_VERSION"
           
       - name: Update project version
         if: steps.update-needed.outputs.update_needed == 'true'
         run: |
-          sed -i "s/<Version>.*<\/Version>/<Version>${{ steps.update-needed.outputs.new_version }}<\/Version>/" ./BlazingTs/BlazingTs/BlazingTs.csproj
+          FINAL_VERSION="${{ steps.increment_hotfix.outputs.new_version || steps.update-needed.outputs.new_version }}"
+          sed -i "s/<Version>.*<\/Version>/<Version>${FINAL_VERSION}<\/Version>/" ./BlazingTs/BlazingTs/BlazingTs.csproj
 
       - name: Build NuGet package
         if: steps.update-needed.outputs.update_needed == 'true'
@@ -140,10 +167,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.update-needed.outputs.new_version }}
-          release_name: Release v${{ steps.update-needed.outputs.new_version }}
+          tag_name: v${{ steps.increment_hotfix.outputs.new_version || steps.update-needed.outputs.new_version }}
+          release_name: Release v${{ steps.increment_hotfix.outputs.new_version || steps.update-needed.outputs.new_version }}
           body: |
-            Updated TypeScript from v${{ steps.current-version.outputs.current_version }} to v${{ steps.update-needed.outputs.new_version }}
+            Updated TypeScript from v${{ steps.current-version.outputs.current_version }} to v${{ steps.increment_hotfix.outputs.new_version || steps.update-needed.outputs.new_version }}
             
             Target Framework: .NET Standard 2.0
           draft: false
@@ -153,17 +180,19 @@ jobs:
         if: steps.update-needed.outputs.update_needed == 'true'
         working-directory: ./BlazingTs/BlazingTs
         run: |
+          FINAL_VERSION="${{ steps.increment_hotfix.outputs.new_version || steps.update-needed.outputs.new_version }}"
           echo "Contents of ./bin/Release directory:"
           ls -la ./bin/Release/
-          echo "Pushing new package version ${{ steps.update-needed.outputs.new_version }}"
-          dotnet nuget push ./bin/Release/BlazingTs.${{ steps.update-needed.outputs.new_version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+          echo "Pushing new package version $FINAL_VERSION"
+          dotnet nuget push ./bin/Release/BlazingTs.${FINAL_VERSION}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
   
       - name: Commit changes
         if: steps.update-needed.outputs.update_needed == 'true'
         run: |
+          FINAL_VERSION="${{ steps.increment_hotfix.outputs.new_version || steps.update-needed.outputs.new_version }}"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add ./BlazingTs/BlazingTs/tools/typescript
           git add ./BlazingTs/BlazingTs/BlazingTs.csproj
-          git commit -m "Update TypeScript to v${{ steps.update-needed.outputs.new_version }}"
+          git commit -m "Update TypeScript to v${FINAL_VERSION}"
           git push
