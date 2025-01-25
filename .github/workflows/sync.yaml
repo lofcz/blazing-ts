@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force new release even if versions match'
+        required: false
+        type: boolean
+        default: false
   
 jobs:
   check-and-update:
@@ -43,18 +49,43 @@ jobs:
             
             # ignore dev versions
             if [[ $LATEST_VERSION == *"dev"* ]]; then
-            echo "Latest version $LATEST_VERSION contains 'dev', skipping update"
-            echo "latest_version=${{ steps.current-version.outputs.current_version }}" >> $GITHUB_OUTPUT
+              echo "Latest version $LATEST_VERSION contains 'dev', skipping update"
+              echo "latest_version=${{ steps.current-version.outputs.current_version }}" >> $GITHUB_OUTPUT
             else
-            echo "Latest TypeScript version: $LATEST_VERSION"
-            echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+              echo "Latest TypeScript version: $LATEST_VERSION"
+              echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
             fi
+
+      - name: Determine if update is needed
+        id: update-needed
+        run: |
+          CURRENT_BASE_VERSION=$(echo "${{ steps.current-version.outputs.current_version }}" | sed 's/-[0-9]*$//')
+          LATEST_VERSION="${{ steps.latest-version.outputs.latest_version }}"
+          
+          if [ "$CURRENT_BASE_VERSION" != "$LATEST_VERSION" ]; then
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+            echo "new_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.force_release }}" == "true" ]; then
+            # Get current suffix number if exists
+            if [[ "${{ steps.current-version.outputs.current_version }}" =~ -([0-9]+)$ ]]; then
+              CURRENT_SUFFIX="${BASH_REMATCH[1]}"
+              NEW_SUFFIX=$((CURRENT_SUFFIX + 1))
+            else
+              NEW_SUFFIX=1
+            fi
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+            echo "new_version=$CURRENT_BASE_VERSION-$NEW_SUFFIX" >> $GITHUB_OUTPUT
+          else
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+            echo "new_version=${{ steps.current-version.outputs.current_version }}" >> $GITHUB_OUTPUT
+          fi
           
       - name: Install dos2unix
+        if: steps.update-needed.outputs.update_needed == 'true'
         run: sudo apt-get install -y dos2unix
     
       - name: Compare versions and update if needed
-        if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
+        if: steps.update-needed.outputs.update_needed == 'true'
         run: |
             # backup extra files
             mkdir -p ./temp_backup
@@ -88,12 +119,12 @@ jobs:
             rm -rf ./temp_backup
           
       - name: Update project version
-        if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
+        if: steps.update-needed.outputs.update_needed == 'true'
         run: |
-          sed -i "s/<Version>.*<\/Version>/<Version>${{ steps.latest-version.outputs.latest_version }}<\/Version>/" ./BlazingTs/BlazingTs/BlazingTs.csproj
+          sed -i "s/<Version>.*<\/Version>/<Version>${{ steps.update-needed.outputs.new_version }}<\/Version>/" ./BlazingTs/BlazingTs/BlazingTs.csproj
 
       - name: Build NuGet package
-        if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
+        if: steps.update-needed.outputs.update_needed == 'true'
         working-directory: ./BlazingTs/BlazingTs
         run: |
           dotnet restore
@@ -101,35 +132,35 @@ jobs:
           dotnet pack --configuration Release /p:TargetFramework=netstandard2.0 --no-build
           
       - name: Create GitHub Release
-        if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
+        if: steps.update-needed.outputs.update_needed == 'true'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.latest-version.outputs.latest_version }}
-          release_name: Release v${{ steps.latest-version.outputs.latest_version }}
+          tag_name: v${{ steps.update-needed.outputs.new_version }}
+          release_name: Release v${{ steps.update-needed.outputs.new_version }}
           body: |
-            Updated TypeScript from v${{ steps.current-version.outputs.current_version }} to v${{ steps.latest-version.outputs.latest_version }}
+            Updated TypeScript from v${{ steps.current-version.outputs.current_version }} to v${{ steps.update-needed.outputs.new_version }}
             
             Target Framework: .NET Standard 2.0
           draft: false
           prerelease: false
           
       - name: Push to NuGet
-        if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
+        if: steps.update-needed.outputs.update_needed == 'true'
         working-directory: ./BlazingTs/BlazingTs
         run: |
           echo "Contents of ./bin/Release directory:"
           ls -la ./bin/Release/
-          echo "Pushing new package version ${{ steps.latest-version.outputs.latest_version }}"
-          dotnet nuget push ./bin/Release/BlazingTs.${{ steps.latest-version.outputs.latest_version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+          echo "Pushing new package version ${{ steps.update-needed.outputs.new_version }}"
+          dotnet nuget push ./bin/Release/BlazingTs.${{ steps.update-needed.outputs.new_version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
   
       - name: Commit changes
-        if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
+        if: steps.update-needed.outputs.update_needed == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add ./BlazingTs/BlazingTs/tools/typescript
           git add ./BlazingTs/BlazingTs/BlazingTs.csproj
-          git commit -m "Update TypeScript to v${{ steps.latest-version.outputs.latest_version }}"
+          git commit -m "Update TypeScript to v${{ steps.update-needed.outputs.new_version }}"
           git push
