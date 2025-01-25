@@ -3,7 +3,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <Version>5.7.2</Version>
+        <Version>5.7.3</Version>
         <Description>TypeScript compilation support for MSBuild</Description>
         <LangVersion>preview</LangVersion>
         <Title>BlazingTs</Title>
