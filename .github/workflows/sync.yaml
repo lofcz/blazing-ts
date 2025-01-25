@@ -102,8 +102,11 @@ jobs:
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
         working-directory: ./BlazingTs/BlazingTs
         run: |
-          dotnet nuget push ./bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
-          
+          echo "Contents of ./bin/Release directory:"
+          ls -la ./bin/Release/
+          echo "Pushing new package version ${{ steps.latest-version.outputs.latest_version }}"
+          dotnet nuget push ./bin/Release/BlazingTs.${{ steps.latest-version.outputs.latest_version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+  
       - name: Commit changes
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
         run: |
