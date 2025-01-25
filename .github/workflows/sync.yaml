@@ -59,26 +59,26 @@ jobs:
       - name: Determine if update is needed
         id: update-needed
         run: |
-          CURRENT_BASE_VERSION=$(echo "${{ steps.current-version.outputs.current_version }}" | sed 's/-[0-9]*$//')
-          LATEST_VERSION="${{ steps.latest-version.outputs.latest_version }}"
-          
-          if [ "$CURRENT_BASE_VERSION" != "$LATEST_VERSION" ]; then
+            CURRENT_BASE_VERSION=$(echo "${{ steps.current-version.outputs.current_version }}" | sed 's/-hotfix\.[0-9]*$//')
+            LATEST_VERSION="${{ steps.latest-version.outputs.latest_version }}"
+            
+            if [ "$CURRENT_BASE_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_needed=true" >> $GITHUB_OUTPUT
             echo "new_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          elif [ "${{ inputs.force_release }}" == "true" ]; then
+            elif [ "${{ inputs.force_release }}" == "true" ]; then
             # Get current suffix number if exists
-            if [[ "${{ steps.current-version.outputs.current_version }}" =~ -([0-9]+)$ ]]; then
-              CURRENT_SUFFIX="${BASH_REMATCH[1]}"
-              NEW_SUFFIX=$((CURRENT_SUFFIX + 1))
+            if [[ "${{ steps.current-version.outputs.current_version }}" =~ -hotfix\.([0-9]+)$ ]]; then
+                CURRENT_SUFFIX="${BASH_REMATCH[1]}"
+                NEW_SUFFIX=$((CURRENT_SUFFIX + 1))
             else
-              NEW_SUFFIX=1
+                NEW_SUFFIX=1
             fi
             echo "update_needed=true" >> $GITHUB_OUTPUT
-            echo "new_version=$CURRENT_BASE_VERSION-$NEW_SUFFIX" >> $GITHUB_OUTPUT
-          else
+            echo "new_version=$CURRENT_BASE_VERSION-hotfix.$NEW_SUFFIX" >> $GITHUB_OUTPUT
+            else
             echo "update_needed=false" >> $GITHUB_OUTPUT
             echo "new_version=${{ steps.current-version.outputs.current_version }}" >> $GITHUB_OUTPUT
-          fi
+            fi
           
       - name: Install dos2unix
         if: steps.update-needed.outputs.update_needed == 'true'
