@@ -66,15 +66,18 @@ jobs:
             echo "update_needed=true" >> $GITHUB_OUTPUT
             echo "new_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
             elif [ "${{ inputs.force_release }}" == "true" ]; then
-            # Get current suffix number if exists
-            if [[ "${{ steps.current-version.outputs.current_version }}" =~ -hotfix\.([0-9]+)$ ]]; then
-                CURRENT_SUFFIX="${BASH_REMATCH[1]}"
-                NEW_SUFFIX=$((CURRENT_SUFFIX + 1))
-            else
-                NEW_SUFFIX=1
-            fi
+            # Split version into parts
+            IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_BASE_VERSION"
+            MAJOR="${VERSION_PARTS[0]}"
+            MINOR="${VERSION_PARTS[1]}"
+            PATCH="${VERSION_PARTS[2]}"
+            
+            # Increment patch version for force release
+            NEW_PATCH=$((PATCH + 1))
+            NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH-hotfix.1"
+            
             echo "update_needed=true" >> $GITHUB_OUTPUT
-            echo "new_version=$CURRENT_BASE_VERSION-hotfix.$NEW_SUFFIX" >> $GITHUB_OUTPUT
+            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
             else
             echo "update_needed=false" >> $GITHUB_OUTPUT
             echo "new_version=${{ steps.current-version.outputs.current_version }}" >> $GITHUB_OUTPUT
