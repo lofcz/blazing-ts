@@ -26,14 +26,14 @@ jobs:
       - name: Get current TypeScript version
         id: current-version
         run: |
-            if [ -f "./tools/typescript/package.json" ]; then
-              CURRENT_VERSION=$(cat ./tools/typescript/package.json | grep -o '"version": "[^"]*"' | cut -d'"' -f4)
-              echo "Current TypeScript version: $CURRENT_VERSION"
-              echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-            else
-              echo "No existing TypeScript installation found"
-              echo "current_version=0.0.0" >> $GITHUB_OUTPUT
-            fi
+          if [ -f "./BlazingTs/BlazingTs/tools/typescript/package.json" ]; then
+            CURRENT_VERSION=$(cat ./BlazingTs/BlazingTs/tools/typescript/package.json | grep -o '"version": "[^"]*"' | cut -d'"' -f4)
+            echo "Current TypeScript version: $CURRENT_VERSION"
+            echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "No existing TypeScript installation found"
+            echo "current_version=0.0.0" >> $GITHUB_OUTPUT
+          fi
           
       - name: Get latest TypeScript version from npm
         id: latest-version
@@ -49,10 +49,11 @@ jobs:
       - name: Compare versions and update if needed
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
         run: |
-          rm -rf ./tools/typescript/*
-          npm install --prefix ./tools typescript@${{ steps.latest-version.outputs.latest_version }}
-          mv ./tools/node_modules/typescript/* ./tools/typescript/
-          rm -rf ./tools/node_modules
+          mkdir -p ./BlazingTs/BlazingTs/tools/typescript
+          rm -rf ./BlazingTs/BlazingTs/tools/typescript/*
+          npm install --prefix ./temp typescript@${{ steps.latest-version.outputs.latest_version }}
+          mv ./temp/node_modules/typescript/* ./BlazingTs/BlazingTs/tools/typescript/
+          rm -rf ./temp
           
       - name: Build NuGet package
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
@@ -79,14 +80,14 @@ jobs:
       - name: Push to NuGet
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
         run: |
-          dotnet nuget push ./bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+          dotnet nuget push ./BlazingTs/BlazingTs/bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
           
       - name: Commit changes
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add ./tools/typescript
+          git add ./BlazingTs/BlazingTs/tools/typescript
           git commit -m "Update TypeScript to v${{ steps.latest-version.outputs.latest_version }}"
           git push
 
