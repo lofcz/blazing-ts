@@ -26,9 +26,14 @@ jobs:
       - name: Get current TypeScript version
         id: current-version
         run: |
-          CURRENT_VERSION=$(node -p "require('./tools/typescript/package.json').version")
-          echo "Current TypeScript version: $CURRENT_VERSION"
-          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            if [ -f "./tools/typescript/package.json" ]; then
+              CURRENT_VERSION=$(cat ./tools/typescript/package.json | grep -o '"version": "[^"]*"' | cut -d'"' -f4)
+              echo "Current TypeScript version: $CURRENT_VERSION"
+              echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            else
+              echo "No existing TypeScript installation found"
+              echo "current_version=0.0.0" >> $GITHUB_OUTPUT
+            fi
           
       - name: Get latest TypeScript version from npm
         id: latest-version
