@@ -2,7 +2,7 @@
 
 # BlazingTS
 
-This is a drop-in replacement for closed-source `Microsoft.Typescript.Msbuild`.
+This is a drop-in, FOSS replacement for `Microsoft.Typescript.Msbuild`.
 
 ## Getting Started
 
