@@ -57,6 +57,7 @@ jobs:
           
       - name: Build NuGet package
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
+        working-directory: ./BlazingTs/BlazingTs
         run: |
           dotnet restore
           dotnet build --configuration Release /p:TargetFramework=netstandard2.0
@@ -79,8 +80,9 @@ jobs:
           
       - name: Push to NuGet
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
+        working-directory: ./BlazingTs/BlazingTs
         run: |
-          dotnet nuget push ./BlazingTs/BlazingTs/bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+          dotnet nuget push ./bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
           
       - name: Commit changes
         if: steps.latest-version.outputs.latest_version != steps.current-version.outputs.current_version
@@ -90,4 +92,3 @@ jobs:
           git add ./BlazingTs/BlazingTs/tools/typescript
           git commit -m "Update TypeScript to v${{ steps.latest-version.outputs.latest_version }}"
           git push
-
